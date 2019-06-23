@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+which http ag jq htmlquery fzf rootname > /dev/null
+
+__json=`http "$1" | ag -o "RalodePlayer.init\(\K{.*}(?=\))"`
+__json=`sed -e '1s/^/[/' -e '$s/$/]/' <<< "$__json"`
+__name=`jq -r '.[0] | .[] | .name' <<< "$__json" | fzf --prompt="Select a dubber: "`
+
+declare -A __items
+eval $(jq -r '.[0] | .[] | select(.name == "'"$__name"'") | .items[] | "__items[\"" + .sname + "\"]=" + (.scode | capture("src=(?<a>\"[^\"]+\")") | .a)' <<< "$__json")
+
+__series=`printf "%s\n" "${!__items[@]}" | sort -V | fzf --no-sort --tac --prompt="Select a series: "`
+http "$(rootname "$1")${__items["$__series"]}" | htmlquery "//iframe/@src"

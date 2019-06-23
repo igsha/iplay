@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+which ag xmllint > /dev/null
+
+xmllint --html --xpath "$1" - 2> /dev/null | ag --nocolor -o "['\"]\K[^'\"]+(?=['\"])"

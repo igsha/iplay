@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -e
+which http xmllint ag fzf openssl jq > /dev/null
+
+__url=`http "$1" | xmllint --html --xpath "string(//*[contains(@src,'moonwalk')]/@src)" - 2>/dev/null`
+[[ ! -z "$__url" ]]
+
+__season=`http --follow "$__url" "Referer:$1" | ag -o "seasons:\s*\[\K[^\]]+" | tr ',' '\n' | fzf --prompt="Choose season: " --tac`
+__episode=`http --follow "$__url" "Referer:$1" "season==$__season" | ag -o "episodes:\s*\[\K[^\]]+" | tr ',' '\n' | fzf --prompt="Choose episode: " --tac`
+
+__page=`http --follow "$__url" "Referer:$1" "season==$__season" "episode==$__episode"`
+__ref=`ag -o "ref:\s*['\"]\K[^'\"]+" <<< "$__page"`
+__partner_id=`ag -o "partner_id:\s*\K\d+" <<< "$__page"`
+__domain_id=`ag -o "domain_id:\s*\K\d+" <<< "$__page"`
+__video_token=`ag -o "video_token:\s*['\"]\K[^'\"]+" <<< "$__page"`
+__host=`ag -o "\bhost:\s*['\"]\K[^'\"]+" <<< "$__page"`
+__port=`ag -o "port:\s*\K\d+" <<< "$__page"`
+__proto=`ag -o "proto:\s*['\"]\K[^'\"]+" <<< "$__page"`
+
+__key=9186a0bae4afec34c323aecb7754b7c848e016188eb8b5be677d54d3e70f9cbd
+__iv=2ea2116c80fae4e90c1e2b2b765fcc45
+__user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.12.0 Chrome/69.0.3497.128 Safari/537.36"
+
+__q=$(openssl enc -aes-256-cbc -base64 -A -iv $__iv -K $__key <<EOF
+{
+    "a":$__partner_id,
+    "b":$__domain_id,
+    "c":false,
+    "e":"$__video_token",
+    "f":"$__user_agent"
+}
+EOF
+)
+
+http POST "$__proto$__host:$__port/vs" "ref=$__ref" "q=$__q" "User-Agent:$__user_agent" | jq .m3u8

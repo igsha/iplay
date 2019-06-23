@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+which ag > /dev/null
+
+ag --nocolor -o '.*:?//[^/]+' <<< "$1"
