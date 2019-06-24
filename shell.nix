@@ -4,9 +4,8 @@ let
 
 in mkShell rec {
   name = "iplay";
-  buildInputs = default.nativeBuildInputs;
+  buildInputs = default.nativeBuildInputs ++ default.propagatedNativeBuildInputs ++ [ dpkg ];
   shellHook = ''
-    export PATH+=:$PWD
     echo Welcome to ${name} environment.
   '';
 }

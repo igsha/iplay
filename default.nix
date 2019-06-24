@@ -1,7 +1,8 @@
-{ stdenv, ag, bash, fzf, httpie, mpv, libxml2, which, jq, openssl, youtube-dl }:
+{ stdenv, ag, bash, fzf, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake }:
 
 let
-  version = builtins.head (builtins.match ".*__version=([[:digit:]\.]+).*" (builtins.readFile ./iplay));
+  cmakeVersionRegex = ".*project\\(.*VERSION ([[:digit:]\.]+).*";
+  version = builtins.head (builtins.match cmakeVersionRegex (builtins.readFile ./CMakeLists.txt));
 
 in stdenv.mkDerivation rec {
   pname = "iplay";
@@ -9,13 +10,8 @@ in stdenv.mkDerivation rec {
 
   src = ./.;
 
-  nativeBuildInputs = [ ag bash fzf httpie mpv libxml2 which jq openssl youtube-dl ];
-
-  phases = [ "unpackPhase" "installPhase" "fixupPhase" ];
-  installPhase = ''
-    mkdir -p $out/bin
-    find . -maxdepth 1 -type f -a -executable | xargs -I{} cp {} $out/bin/
-  '';
+  nativeBuildInputs = [ cmake ];
+  propagatedNativeBuildInputs = [ ag bash fzf httpie mpv libxml2 which jq openssl youtube-dl ];
 
   meta = with stdenv.lib; {
     description = "An interactive video player capable to work with urls";
