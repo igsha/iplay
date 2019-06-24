@@ -32,4 +32,4 @@ __q=$(openssl enc -aes-256-cbc -base64 -A -iv $__iv -K $__key <<EOF
 EOF
 )
 
-http POST "$__proto$__host:$__port/vs" "ref=$__ref" "q=$__q" "User-Agent:$__user_agent" | jq .m3u8
+http POST "$__proto$__host:$__port/vs" "ref=$__ref" "q=$__q" "User-Agent:$__user_agent" | jq -r .m3u8
