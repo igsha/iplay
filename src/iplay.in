@@ -8,24 +8,26 @@ source `dirname ${BASH_SOURCE[0]}`/../lib/extractors.sh
 usage()
 {
     cat <<EOF
-Usage: $0 [-e <name>|-u|-y] <url>|-h|-v|-l
+Usage: $0 [-e <name>|-u|-y] [-b] <url>|-h|-v|-l
     <url> --- your url to play
     -e <name> --- use <name> extractor
     -u --- only show extracted url, don't play it
     -h --- print this help & exit
     -v --- print version & exit
     -l --- list known extractors & exit
+    -b --- detach mpv to separate session
 
 EOF
 }
 
-while getopts "vhe:luy" opt; do
+while getopts "vhe:lub" opt; do
     case "$opt" in
         v) echo Version: $__version; exit 0;;
         l) echo "Known extractors:"; printf "* %s\n" "${extractors[@]}"; exit 0;;
         e) __extractor="$OPTARG";;
         u) __only_url=1;;
         h) usage; exit 0;;
+        b) __background=1;;
     esac
 done
 shift $((OPTIND - 1))
@@ -39,8 +41,12 @@ else
     done
 fi
 
-if [[ ! -z "$__only_url" ]]; then
-    echo $__url
+if [[ -z "$__only_url" ]]; then
+    if [[ -z "$__background" ]]; then
+        mpv "$__url"
+    else
+        (set -m; exec mpv "$__url" &>/dev/null &)
+    fi
 else
-    (set -m; exec umpv "$__url" &)
+    echo $__url
 fi
