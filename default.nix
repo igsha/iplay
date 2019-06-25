@@ -1,4 +1,4 @@
-{ stdenv, ag, bash, fzf, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake }:
+{ stdenv, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, perlPackages }:
 
 let
   cmakeVersionRegex = ".*project\\(.*VERSION ([[:digit:]\.]+).*";
@@ -10,8 +10,8 @@ in stdenv.mkDerivation rec {
 
   src = ./.;
 
-  nativeBuildInputs = [ cmake ];
-  propagatedNativeBuildInputs = [ ag bash fzf httpie mpv libxml2 which jq openssl youtube-dl ];
+  nativeBuildInputs = [ cmake perlPackages.podlators ];
+  propagatedNativeBuildInputs = [ ag bash fzy httpie mpv libxml2 which jq openssl youtube-dl ];
 
   meta = with stdenv.lib; {
     description = "An interactive video player capable to work with urls";
