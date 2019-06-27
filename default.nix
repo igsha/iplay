@@ -1,4 +1,4 @@
-{ stdenv, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, pandoc }:
+{ stdenv, makeWrapper, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, pandoc }:
 
 let
   cmakeVersionRegex = ".*project\\(.*VERSION ([[:digit:]\.]+).*";
@@ -10,8 +10,11 @@ in stdenv.mkDerivation rec {
 
   src = ./.;
 
-  nativeBuildInputs = [ cmake pandoc ];
-  propagatedNativeBuildInputs = [ ag bash fzy httpie mpv libxml2 which jq openssl youtube-dl ];
+  buildInputs = [ cmake pandoc makeWrapper ];
+  nativeBuildInputs = [ ag bash fzy httpie mpv libxml2 which jq openssl youtube-dl ];
+  postInstall = ''
+    wrapProgram $out/bin/iplay --prefix PATH : ${stdenv.lib.makeBinPath nativeBuildInputs}
+  '';
 
   meta = with stdenv.lib; {
     description = "An interactive video player capable to work with urls";
