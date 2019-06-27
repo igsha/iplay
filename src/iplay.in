@@ -1,23 +1,13 @@
 #!/usr/bin/env bash
 set -e
 __version=@PROJECT_VERSION@
-which mpv youtube-dl > /dev/null
+which mpv > /dev/null
 
 source `dirname ${BASH_SOURCE[0]}`/../lib/extractors.sh
 
 usage()
 {
-    cat <<EOF
-Usage: $0 [-e <name>|-u|-y] [-b] <url>|-h|-v|-l
-    <url> --- your url to play
-    -e <name> --- use <name> extractor
-    -u --- only show extracted url, don't play it
-    -h --- print this help & exit
-    -v --- print version & exit
-    -l --- list known extractors & exit
-    -b --- detach mpv to separate session
-
-EOF
+    man iplay
 }
 
 while getopts "vhe:lub" opt; do

@@ -1,4 +1,4 @@
-{ stdenv, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, perlPackages }:
+{ stdenv, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, pandoc }:
 
 let
   cmakeVersionRegex = ".*project\\(.*VERSION ([[:digit:]\.]+).*";
@@ -10,7 +10,7 @@ in stdenv.mkDerivation rec {
 
   src = ./.;
 
-  nativeBuildInputs = [ cmake perlPackages.podlators ];
+  nativeBuildInputs = [ cmake pandoc ];
   propagatedNativeBuildInputs = [ ag bash fzy httpie mpv libxml2 which jq openssl youtube-dl ];
 
   meta = with stdenv.lib; {
