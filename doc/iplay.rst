@@ -18,9 +18,12 @@ DESCRIPTION
 ===========
 
 The program allows to extract video from ``<url>``.
-It uses ``fzy`` to list available seasons and episodes.
+It uses ``fzy`` to list available seasons and episodes and ``mpv`` to play they.
 
-Currently supports only short options:
+OPTIONS
+=======
+
+Currently ``iplay`` supports only short options:
 
 <url>
   your url to play

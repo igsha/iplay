@@ -4,7 +4,7 @@ let
 
 in mkShell rec {
   name = "iplay";
-  buildInputs = default.nativeBuildInputs ++ default.propagatedNativeBuildInputs ++ [ dpkg ];
+  buildInputs = default.nativeBuildInputs ++ default.buildInputs ++ [ dpkg ];
   shellHook = ''
     echo Welcome to ${name} environment.
   '';
