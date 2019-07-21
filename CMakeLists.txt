@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(iplay
-    VERSION 0.0.4
+    VERSION 0.1.0
     LANGUAGES NONE
     DESCRIPTION "Interactive player for terminal"
     HOMEPAGE_URL "https://github.com/igsha/iplay"
