@@ -2,7 +2,7 @@ which http xmllint ag fzy openssl jq > /dev/null || return 1
 
 rootname(){ ag --nocolor -o '.*:?//[^/]+' <<< "$1"; }
 parse_xml() { xmllint --html --xpath "$1" - 2>/dev/null; }
-parse_request(){ http "$1" | parse_xml "$2"; }
+parse_request(){ http --follow "$1" | parse_xml "$2"; }
 parse_array(){ ag -o "$1:\s*\[\K[^\]]+" | tr ',' '\n'; }
 unquote(){ ag -o "=['\"]\K[^'\"]+"; }
 path_prefix(){ sed -e "s@^//@http://@" -e "s@^/@`rootname $1`/@"; }
@@ -10,7 +10,7 @@ path_prefix(){ sed -e "s@^//@http://@" -e "s@^/@`rootname $1`/@"; }
 pre_moonwalk()
 (
     set -e
-    parse_xml "string(//*[contains(@src,'moonwalk')]/@src)"
+    parse_request "$1" "string(//*[contains(@src,'moonwalk')]/@src)"
 )
 
 # $1 - original url, $2 - result of pre_moonwalk
@@ -43,7 +43,7 @@ moonwalk()
 pre_ralode()
 (
     set -e
-    ag -o "RalodePlayer.init\(\K{.*}(?=\))"
+    http "$1" | ag -o "RalodePlayer.init\(\K{.*}(?=\))"
 )
 
 # $1 - original url, $2 - result of pre_ralode
@@ -61,7 +61,29 @@ ralode()
     parse_request "$(rootname "$1")${__items["$__episode"]}" "string(//iframe/@src)" | path_prefix "$1"
 )
 
-export extractors=(ralode moonwalk)
+pre_jwplayer()
+(
+    set -e
+    http --follow "$1" "referer:$1" | parse_xml "string(//iframe/@src)"
+)
+
+# $1 - original url, $2 - result of pre_jwplayer
+jwplayer()
+(
+    set -e
+
+    __root=`rootname "$2"`
+    __domain=`basename "$__root"`
+    __json=`http POST "$__root/api/source/$(basename "$2")" r="$1" d="$__domain"`
+
+    declare -A __items
+    eval $(jq -r '.data[] | "__items[\"" + .label + "\"]=\"" + .file + "\""' <<< "$__json")
+
+    __label=`printf "%s\n" "${!__items[@]}" | fzy --prompt="Select label: "`
+    echo "${__items[$__label]}"
+)
+
+export extractors=(ralode moonwalk jwplayer)
 
 traverse()
 (
@@ -70,10 +92,10 @@ traverse()
     case "$__type" in
         self) echo "$1"; return 0;;
         back) __result="$2";;
-        iframe) __result=`parse_xml "//iframe/@src | //iframe/@href" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
-        href) __result=`parse_xml "//*/@href | //*/@src | //*/@data-src" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
+        iframe) __result=`parse_request "$1" "//iframe/@src | //iframe/@href" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
+        href) __result=`parse_request "$1" "//*/@href | //*/@src | //*/@data-src" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
     esac
 
     [[ ! -z "$__result" ]] || __result="$1"
-    http "$__result" | traverse "$__result" "$1"
+    traverse "$__result" "$1"
 )

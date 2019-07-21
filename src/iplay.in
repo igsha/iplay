@@ -24,21 +24,20 @@ done
 shift $((OPTIND - 1))
 
 __url="$1"
-__webpage=`http "$__url"`
 
 if [[ ! -z "$__traverse" ]]; then
-    __url=`traverse "$__url" <<< "$__webpage"`
-    __webpage=`http "$__url"`
+    __url=`traverse "$__url"`
 fi
 
 if [[ ! -z "$__extractor" ]]; then
-    __pre=`pre_$__extractor <<< "$__webpage"`
+    __pre=`pre_$__extractor "$__url"`
     __url=`$__extractor "$__url" "$__pre"`
 else
-    for ex in ${extractors[@]}; do
-        __pre=`pre_$ex <<< "$__webpage"` || continue
+    for __ex in ${extractors[@]}; do
+        echo Try $__ex ... >&2
+        __pre=`pre_$__ex "$__url"` || continue
         [[ ! -z "$__pre" ]] || continue
-        __url=`$ex "$__url" "$__pre"`
+        __url=`$__ex "$__url" "$__pre"`
         break
     done
 fi
