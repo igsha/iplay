@@ -40,6 +40,9 @@ Currently ``iplay`` supports only short options:
 -b
   detach mpv to a separate session
 
+-t
+  traverse url: allow user to traverse through special tags
+
 EXAMPLES
 ========
 

@@ -10,7 +10,7 @@ usage()
     man iplay
 }
 
-while getopts "vhe:lub" opt; do
+while getopts "vhe:lubt" opt; do
     case "$opt" in
         v) echo Version: $__version; exit 0;;
         l) echo "Known extractors:"; printf "* %s\n" "${extractors[@]}"; exit 0;;
@@ -18,15 +18,27 @@ while getopts "vhe:lub" opt; do
         u) __only_url=1;;
         h) usage; exit 0;;
         b) __background=1;;
+        t) __traverse=1;;
     esac
 done
 shift $((OPTIND - 1))
 
+__url="$1"
+__webpage=`http "$__url"`
+
+if [[ ! -z "$__traverse" ]]; then
+    __url=`traverse "$__url" <<< "$__webpage"`
+    __webpage=`http "$__url"`
+fi
+
 if [[ ! -z "$__extractor" ]]; then
-    __url=`$__extractor "$1"`
+    __pre=`pre_$__extractor <<< "$__webpage"`
+    __url=`$__extractor "$__url" "$__pre"`
 else
     for ex in ${extractors[@]}; do
-        __url=`$ex "$1"` || continue
+        __pre=`pre_$ex <<< "$__webpage"` || continue
+        [[ ! -z "$__pre" ]] || continue
+        __url=`$ex "$__url" "$__pre"`
         break
     done
 fi
