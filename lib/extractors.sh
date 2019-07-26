@@ -75,6 +75,10 @@ jwplayer()
     __root=`rootname "$2"`
     __domain=`basename "$__root"`
     __json=`http POST "$__root/api/source/$(basename "$2")" r="$1" d="$__domain"`
+    if ! jq -e . &>/dev/null <<< "$__json"; then
+        echo $2 # leave it to youtube-dl
+        return 0
+    fi
 
     declare -A __items
     eval $(jq -r '.data[] | "__items[\"" + .label + "\"]=\"" + .file + "\""' <<< "$__json")
