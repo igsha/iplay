@@ -7,13 +7,7 @@ parse_array(){ ag -o "$1:\s*\[\K[^\]]+" | tr ',' '\n'; }
 unquote(){ ag -o "=['\"]\K[^'\"]+"; }
 path_prefix(){ sed -e "s@^//@http://@" -e "s@^/@`rootname $1`/@"; }
 
-pre_moonwalk()
-(
-    set -e
-    parse_request "$1" "string(//*[contains(@src,'moonwalk')]/@src)"
-)
-
-# $1 - original url, $2 - result of pre_moonwalk
+# $1 - original url, $2 - url of iframe
 moonwalk()
 (
     set -e
@@ -87,17 +81,19 @@ jwplayer()
     echo "${__items[$__label]}"
 )
 
-export extractors=(ralode moonwalk jwplayer)
-
 traverse()
 (
     set -e
-    __type=`printf "%s\n" self back iframe href | fzy --prompt="Choose type ($1): "`
+    __type=`printf "%s\n" self ralode moonwalk jwplayer back iframe src href | fzy --prompt="Choose type ($1): "`
     case "$__type" in
         self) echo "$1"; return 0;;
         back) __result="$2";;
+        src) __result=`parse_request "$1" "//*/@src | //*/@data-src" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
+        href) __result=`parse_request "$1" "//*/@href" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
         iframe) __result=`parse_request "$1" "//iframe/@src | //iframe/@href" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
-        href) __result=`parse_request "$1" "//*/@href | //*/@src | //*/@data-src" | unquote | fzy --prompt="Choose url: " | path_prefix "$1"`;;
+        moonwalk) moonwalk "$2" "$1"; return 0;;
+        ralode) ralode "$1" $(pre_ralode "$1"); return 0;;
+        jwplayer) jwplayer "$1" $(pre_jwplayer "$1"); return 0;;
     esac
 
     [[ ! -z "$__result" ]] || __result="$1"
