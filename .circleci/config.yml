@@ -1,0 +1,22 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: nixorg/nix:circleci
+    steps:
+      - checkout
+      - restore_cache:
+          key: nix-store-v1-{{ checksum "default.nix" }}
+      - run: |
+          nix-shell -I nixpkgs=channel:nixos-19.03 --run \
+          "cmake -B build -DCPACK_GENERATOR=DEB && cmake --build build --target package"
+      - run: mkdir /tmp/artifacts && cp build/*.tar.gz build/*.deb /tmp/artifacts
+      - save_cache:
+          key: nix-store-v1-{{ checksum "default.nix" }}
+          when: always
+          paths:
+            - /nix
+      - store_artifacts:
+          path: /tmp/artifacts
+

@@ -1,7 +1,10 @@
 iplay
 =====
 
-Interactive player for terminal
+.. image:: https://circleci.com/gh/igsha/iplay.svg?style=svg
+    :target: https://circleci.com/gh/igsha/iplay
+
+An interactive player for terminal.
 
 Installation
 ============
