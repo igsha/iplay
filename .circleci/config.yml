@@ -1,5 +1,22 @@
 version: 2.1
 
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - publish-github-release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+
 jobs:
   build:
     docker:
@@ -7,16 +24,33 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: nix-store-v2-{{ checksum "default.nix" }}
+          key: nix-store-v3-{{ checksum "default.nix" }}
       - run: |
           nix-shell -I nixpkgs=channel:nixos-19.03 --run \
-          "cmake -B build -DCPACK_GENERATOR=DEB && cmake --build build --target package"
-      - run: mkdir /tmp/artifacts && cp build/*.tar.gz build/*.deb /tmp/artifacts
+          "cmake -B build -DCPACK_GENERATOR=DEB && cmake --build build -- package"
+      - run: mkdir build/artifacts && mv build/*.tar.gz build/*.deb build/artifacts
+      - run: |
+          git tag -l --format="%(subject)" ${CIRCLE_TAG} >> build/name.txt
+          git tag -l --format="%(body)" ${CIRCLE_TAG} >> build/body.txt
       - save_cache:
-          key: nix-store-v2-{{ checksum "default.nix" }}
-          when: always
+          key: nix-store-v3-{{ checksum "default.nix" }}
           paths:
             - /nix
       - store_artifacts:
-          path: /tmp/artifacts
+          path: build/artifacts
+      - persist_to_workspace:
+          root: '.'
+          paths:
+            - build
 
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.12.2
+    steps:
+      - attach_workspace:
+          at: '.'
+      - run: |
+          ghr -t ${GITHUB_TOKEN} \
+            -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} \
+            -n "$(cat build/name.txt)" -b "$(cat build/body.txt)" \
+            -delete ${CIRCLE_TAG} build/artifacts
