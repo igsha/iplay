@@ -81,10 +81,34 @@ jwplayer()
     echo "${__items[$__label]}"
 )
 
+# $1 - original url
+videolist()
+(
+    set -e
+    __json=`http --follow "$1" | ag -o "videoList\s*=\s*\K\[[^\]]+\]"`
+    __id=`jq '.[] | .id' <<< "$__json" | fzy --prompt="Select episode: "`
+    echo $__id >&2
+    jq -r ".[] | select(.id == ${__id}) | .link" <<< "$__json" | path_prefix "$1"
+)
+
+# $1 - original url
+kodik()
+(
+    set -e
+    __html=`http "$1"`
+    __voice=`parse_xml "//*[@class='serial-translations-box']/select/option/text()" <<< "$__html" | fzy --prompt="Select voice: "`
+    __value=`parse_xml "string(//*[@class='serial-translations-box']/select/option[.='$__voice']/@value)" <<< "$__html" | path_prefix ""`
+    __html=`http "$__value"`
+    __season=`parse_xml "//*[@class='series-options']/div/@class" <<< "$__html" | unquote | fzy --prompt="Choose season: "`
+    __episode=`parse_xml "//*[@class='series-options']/div[@class='$__season']/option/text()" <<< "$__html" | fzy --prompt="Choose episode: "`
+
+    parse_xml "string(//*[@class='series-options']/div[@class='$__season']/option[.='$__episode']/@value)" <<< "$__html" | path_prefix "$1"
+)
+
 traverse()
 (
     set -e
-    __type=`printf "%s\n" self ralode moonwalk jwplayer back iframe src href | fzy --prompt="Choose type ($1): "`
+    __type=`printf "%s\n" self ralode moonwalk jwplayer videolist kodik back iframe src href | fzy --prompt="Choose type ($1): "`
     case "$__type" in
         self) echo "$1"; return 0;;
         back) __result="$2";;
@@ -94,6 +118,8 @@ traverse()
         moonwalk) moonwalk "$2" "$1"; return 0;;
         ralode) ralode "$1" $(pre_ralode "$1"); return 0;;
         jwplayer) jwplayer "$1" $(pre_jwplayer "$1"); return 0;;
+        videolist) videolist "$1"; return 0;;
+        kodik) kodik "$1"; return 0;;
     esac
 
     [[ ! -z "$__result" ]] || __result="$1"
