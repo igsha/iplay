@@ -96,9 +96,11 @@ kodik()
 (
     set -e
     __html=`http "$1"`
-    __voice=`parse_xml "//*[@class='serial-translations-box']/select/option/text()" <<< "$__html" | fzy --prompt="Select voice: "`
-    __value=`parse_xml "string(//*[@class='serial-translations-box']/select/option[.='$__voice']/@value)" <<< "$__html" | path_prefix ""`
-    __html=`http "$__value"`
+    if parse_xml "//*[@class='serial-translations-box']" <<< "$__html" >/dev/null; then
+        __voice=`parse_xml "//*[@class='serial-translations-box']/select/option/text()" <<< "$__html" | fzy --prompt="Select voice: "`
+        __value=`parse_xml "string(//*[@class='serial-translations-box']/select/option[.='$__voice']/@value)" <<< "$__html" | path_prefix ""`
+        __html=`http "$__value"`
+    fi
     __season=`parse_xml "//*[@class='series-options']/div/@class" <<< "$__html" | unquote | fzy --prompt="Choose season: "`
     __episode=`parse_xml "//*[@class='series-options']/div[@class='$__season']/option/text()" <<< "$__html" | fzy --prompt="Choose episode: "`
 
