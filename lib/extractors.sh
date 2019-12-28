@@ -107,10 +107,22 @@ kodik()
     parse_xml "string(//*[@class='series-options']/div[@class='$__season']/option[.='$__episode']/@value)" <<< "$__html" | path_prefix "$1"
 )
 
+# $1 - original url
+seplay()
+(
+    set -e
+    __html=`http "$1"`
+    __html=`parse_xml "//iframe[@class='player']/@src" <<< "$__html" | unquote | path_prefix "$1" | fzy --prompt="Select item: "`
+    __base=`basename "$__html"`
+    __json=`http "$__html" referer:"$1" | parse_xml "string(//div[@id='videoplayer${__base}']/@data-config)"`
+
+    jq -r '.hls' <<< "$__json"
+)
+
 traverse()
 (
     set -e
-    __type=`printf "%s\n" self ralode moonwalk jwplayer videolist kodik back iframe src href | fzy --prompt="Choose type ($1): "`
+    __type=`printf "%s\n" self ralode moonwalk jwplayer videolist kodik seplay back iframe src href | fzy --prompt="Choose type ($1): "`
     case "$__type" in
         self) echo "$1"; return 0;;
         back) __result="$2";;
@@ -122,6 +134,7 @@ traverse()
         jwplayer) jwplayer "$1" $(pre_jwplayer "$1"); return 0;;
         videolist) videolist "$1"; return 0;;
         kodik) kodik "$1"; return 0;;
+        seplay) seplay "$1"; return 0;;
     esac
 
     [[ ! -z "$__result" ]] || __result="$1"
