@@ -1,7 +1,7 @@
-{ stdenv, makeWrapper, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, pandoc }:
+{ stdenv, lib, makeWrapper, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, pandoc }:
 
 let
-  cmakeVersionRegex = ".*project\\(.*VERSION ([[:digit:]\.]+).*";
+  cmakeVersionRegex = ".*project\\(.*VERSION ([[:digit:]\\.]+).*";
   version = builtins.head (builtins.match cmakeVersionRegex (builtins.readFile ./CMakeLists.txt));
 
 in stdenv.mkDerivation rec {
@@ -13,10 +13,10 @@ in stdenv.mkDerivation rec {
   buildInputs = [ cmake pandoc makeWrapper ];
   nativeBuildInputs = [ ag bash fzy httpie mpv libxml2 which jq openssl youtube-dl ];
   postInstall = ''
-    wrapProgram $out/bin/iplay --prefix PATH : ${stdenv.lib.makeBinPath nativeBuildInputs}
+    wrapProgram $out/bin/iplay --prefix PATH : ${lib.makeBinPath nativeBuildInputs}
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "An interactive video player capable to work with urls";
     homepage = https://github.com/igsha/iplay;
     license = licenses.mit;
