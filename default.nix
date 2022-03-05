@@ -1,4 +1,4 @@
-{ stdenv, lib, makeWrapper, ag, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, pandoc }:
+{ stdenv, lib, makeWrapper, silver-searcher, bash, fzy, httpie, mpv, libxml2, which, jq, openssl, youtube-dl, cmake, pandoc }:
 
 let
   cmakeVersionRegex = ".*project\\(.*VERSION ([[:digit:]\\.]+).*";
@@ -11,7 +11,7 @@ in stdenv.mkDerivation rec {
   src = ./.;
 
   buildInputs = [ cmake pandoc makeWrapper ];
-  nativeBuildInputs = [ ag bash fzy httpie mpv libxml2 which jq openssl youtube-dl ];
+  nativeBuildInputs = [ silver-searcher bash fzy httpie mpv libxml2 which jq openssl youtube-dl ];
   postInstall = ''
     wrapProgram $out/bin/iplay --prefix PATH : ${lib.makeBinPath nativeBuildInputs}
   '';
